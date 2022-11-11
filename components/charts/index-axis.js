@@ -2,40 +2,22 @@ import { AxisElement } from './axis.js';
 import { svg } from 'https://unpkg.com/uhtml?module';
 
 export class IndexAxisElement extends AxisElement {
-  ds = null;
-
-  invert = false;
   hasPadding = true;
-  targetGridlines = 5;
-
-  destStart = 0;
-  destSize = 100;
 
   gridlines = [];
 
-  constructor(dataset = null, destStart = 0, destEnd = 100, invert = false) {
-    super();
-    this.invert = !!invert;
-    this.setDataset(dataset);
-    this.setRange(destStart, destEnd);
+  constructor(dataset, range, options) {
+    super(dataset, range, options);
+    if (options?.hasPadding != null) this.hasPadding = !!options.hasPadding;
+  }
+
+  init() {
+    super.init();
+    if (this.hasAttribute('hasPadding')) this.hasPadding = true;
   }
 
   get firstIndex() { return this.ds?.firstIndex; }
   get length() { return this.ds?.length; }
-
-  setDataset(dataset) {
-    this.ds = dataset;
-    this.plots = [];
-    return this;
-  }
-
-  setRange(destStart, destEnd) {
-    const near = destStart ^ 0;
-    const far = destEnd ^ 0;
-    this.destStart = near;
-    this.destSize = far - near;
-    return this;
-  }
 
   setPadding(hasPadding) {
     this.hasPadding = !!hasPadding;
@@ -46,11 +28,16 @@ export class IndexAxisElement extends AxisElement {
     return index;
   }
 
+  getLabel(index) {
+    return this.ds.getValue(index, '~dt');
+  }
+
   transform(index) {
-    if (this.invert) {
-      return (this.firstIndex - index - (this.hasPadding ? 0.5 : 0)) * this.destSize / (this.length - (this.hasPadding ? 0 : 1)) + this.destStart + this.destSize;
+    const { invert, hasPadding, firstIndex, length, range: { start, end, size } } = this;
+    if (invert) {
+      return (firstIndex - index - (hasPadding ? 0.5 : 0)) * size / (length - (hasPadding ? 0 : 1)) + end;
     } else {
-      return (index - this.firstIndex + (this.hasPadding ? 0.5 : 0)) * this.destSize / (this.length - (this.hasPadding ? 0 : 1)) + this.destStart;
+      return (index - firstIndex + (hasPadding ? 0.5 : 0)) * size / (length - (hasPadding ? 0 : 1)) + start;
     }
   }
   t(index) { return this.transform(index); }
@@ -98,12 +85,8 @@ export class IndexAxisElement extends AxisElement {
 
 export class XIndexAxisElement extends IndexAxisElement {
   render() {
-    const xStart = this.destStart;
-    const xEnd = xStart + this.destSize;
-
     return svg`
       <g class="cons-x-axis cons-x-axis--index">
-        <line x1=${xStart} y1="0" x2=${xEnd} y2="0" />
         ${this.gridlines.map(gl => svg`
           <line x1=${this.tr(gl)} y1="0" x2=${this.tr(gl)} y2="6" />
           <text x=${this.tr(gl)} y="12" dominant-baseline="hanging" text-anchor="middle">${this.getLabel(gl)}</text>

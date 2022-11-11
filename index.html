@@ -10,11 +10,40 @@
 
 <body>
   <cons-xy-plot>
-    <cons-x-index-axis name="x-main"></cons-x-index-axis>
-    <cons-y-numeric-axis name="y-main" invert artificialMin="0" artificialMax="4" unit="H"></cons-y-numeric-axis>
-    <cons-lines series='["DO","PU"]'></cons-lines>
+    <cons-x-index-axis name="x-main" targetGridlines="5"></cons-x-index-axis>
+    <cons-y-numeric-axis name="y-main" invert units="H" plots="DO,PU,DO~merged,DO~avg" targetGridlines="3">
+    </cons-y-numeric-axis>
+    <cons-lines plots="DO,PU,DO~merged,DO~avg"></cons-lines>
     <cons-dataset>
       [
+      { "PU": 1.7, "DO": 1.5 },
+      { "PU": 1.2, "DO": 1.1 },
+      { "PU": 1.3, "DO": 2.2 },
+      { "PU": 1.4, "DO": 2.2 },
+      { "PU": 1.4, "DO": 2.9 },
+      { "PU": 1.3, "DO": 2.5 },
+      { "PU": 1.7, "DO": 3.1 },
+      { "PU": 1.7, "DO": 1.5 },
+      { "PU": 1.2, "DO": 1.1 },
+      { "PU": 1.3, "DO": 2.2 },
+      { "PU": 1.4, "DO": 2.2 },
+      { "PU": 1.4, "DO": 2.9 },
+      { "PU": 1.3, "DO": 2.5 },
+      { "PU": 1.7, "DO": 3.1 },
+      { "PU": 1.7, "DO": 1.5 },
+      { "PU": 1.2, "DO": 1.1 },
+      { "PU": 1.3, "DO": 2.2 },
+      { "PU": 1.4, "DO": 2.2 },
+      { "PU": 1.4, "DO": 2.9 },
+      { "PU": 1.3, "DO": 2.5 },
+      { "PU": 1.7, "DO": 3.1 },
+      { "PU": 1.7, "DO": 1.5 },
+      { "PU": 1.2, "DO": 1.1 },
+      { "PU": 1.3, "DO": 2.2 },
+      { "PU": 1.4, "DO": 2.2 },
+      { "PU": 1.4, "DO": 2.9 },
+      { "PU": 1.3, "DO": 2.5 },
+      { "PU": 1.7, "DO": 3.1 },
       { "PU": 1.7, "DO": 1.5 },
       { "PU": 1.2, "DO": 1.1 },
       { "PU": 1.3, "DO": 2.2 },

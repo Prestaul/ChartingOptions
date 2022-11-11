@@ -1,20 +1,16 @@
 import { DhtmlElement } from '/dhtml/define.js';
 import { svg } from 'https://unpkg.com/uhtml?module';
+import { stringArray } from './utils.js';
 
 export class LinesElement extends DhtmlElement {
   ds = null;
   xaxis = null;
   yaxis = null;
-  series = [];
+  plots = [];
 
   init() {
     console.log('LinesElement::init');
-
-    const series = JSON.parse(this.getAttribute('series'));
-    if (!Array.isArray(series)) {
-      throw new Error('LinesElement requires a JSON array value for the "series" attribute');
-    }
-    this.series = series;
+    this.plots = stringArray(this.getAttribute('plots'));
   }
 
   setDataset(dataset) {
@@ -36,7 +32,7 @@ export class LinesElement extends DhtmlElement {
     return svg`
       <polyline
         points=${this.ds.getSeries(name).map((v, i) =>
-      `${this.xaxis.ts(i)} ${this.yaxis.ts(v)}`
+      `${this.xaxis.ts(i + this.ds.firstIndex)} ${this.yaxis.ts(v)}`
     )}
       />
     `;
@@ -45,7 +41,7 @@ export class LinesElement extends DhtmlElement {
   render() {
     return svg`
       <g class="cons-lines">
-        ${this.series.map(name => this.renderSeries(name))}
+        ${this.plots.map(name => this.renderSeries(name))}
       </g>
     `;
   }

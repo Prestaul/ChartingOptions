@@ -1,10 +1,8 @@
 import { html, svg } from 'https://unpkg.com/uhtml?module';
 import { AxisElement } from './axis.js';
+import { nullableNumber, isNumber } from './utils.js';
 
 export class NumericAxisElement extends AxisElement {
-  ds = null;
-
-  invert = false;
   artificialMin = null;
   artificialMax = null;
   keepZeroVisible = false;
@@ -16,40 +14,14 @@ export class NumericAxisElement extends AxisElement {
   gridMin = 0;
   gridMax = 1;
 
-  destStart = 0;
-  destSize = 100;
-
   gridlines = [];
-  plots = [];
-
-  constructor(dataset = null, destStart = 0, destEnd = 100, invert = false) {
-    super();
-    this.invert = !!invert;
-    this.setDataset(dataset);
-    this.setRange(destStart, destEnd);
-  }
 
   init() {
     super.init();
-    if (this.hasAttribute('invert')) this.invert = true;
-    this.artificialMin = Number(this.getAttribute('artificialMin')) || this.artificialMin;
-    this.artificialMax = Number(this.getAttribute('artificialMax')) || this.artificialMax;
-    this.targetGridlines = Number(this.getAttribute('targetGridlines')) || this.targetGridlines;
-    this.minGridlines = Number(this.getAttribute('minGridlines')) || this.minGridlines;
-  }
 
-  setDataset(dataset) {
-    this.ds = dataset;
-    this.plots = [];
-    return this;
-  }
-
-  setRange(destStart, destEnd) {
-    const near = destStart ^ 0;
-    const far = destEnd ^ 0;
-    this.destStart = near;
-    this.destSize = far - near;
-    return this;
+    this.artificialMin = nullableNumber(this.getAttribute('artificialMin')) ?? this.artificialMin;
+    this.artificialMax = nullableNumber(this.getAttribute('artificialMax')) ?? this.artificialMax;
+    this.minGridlines = nullableNumber(this.getAttribute('minGridlines')) ?? this.minGridlines;
   }
 
   setKeepZeroVisible(keepZeroVisible) {
@@ -57,20 +29,12 @@ export class NumericAxisElement extends AxisElement {
     return this;
   }
 
-  addPlot(seriesName) {
-    this.plots.push(seriesName);
-    return this;
-  }
-
-  getValue(index, seriesName) {
-    return this.ds.getValue(index, seriesName);
-  }
-
   transform(value) {
-    if (this.invert) {
-      return (this.gridMin - value) * this.destSize / (this.gridMax - this.gridMin) + this.destStart + this.destSize;
+    const { invert, gridMin, gridMax, range: { start, end, size } } = this;
+    if (invert) {
+      return (gridMin - value) * size / (gridMax - gridMin) + end;
     } else {
-      return (value - this.gridMin) * this.destSize / (this.gridMax - this.gridMin) + this.destStart;
+      return (value - gridMin) * size / (gridMax - gridMin) + start;
     }
   }
   t(value) { return this.transform(value); }
@@ -92,11 +56,8 @@ export class NumericAxisElement extends AxisElement {
   }
 
   reset() {
-    var minValue = this.calculateMinValue(),
-      maxValue = this.calculateMaxValue();
-
-    if (typeof this.artificialMin === 'number') minValue = this.artificialMin;
-    if (typeof this.artificialMax === 'number') maxValue = this.artificialMax;
+    let minValue = isNumber(this.artificialMin) ? this.artificialMin : this.calculateMinValue();
+    let maxValue = isNumber(this.artificialMax) ? this.artificialMax : this.calculateMaxValue();
 
     if (this.keepZeroVisible) {
       if (minValue > 0) {
@@ -121,8 +82,8 @@ export class NumericAxisElement extends AxisElement {
    * Calculate values for gridlines
    */
   resetGridlines() {
-    var minValue = this.minValue,
-      maxValue = this.maxValue;
+    let minValue = this.minValue;
+    let maxValue = this.maxValue;
 
     // if(maxValue == minValue) {
     // 	//Fudge it a little bit
@@ -139,7 +100,7 @@ export class NumericAxisElement extends AxisElement {
     var interval = (maxValue - minValue) / (this.targetGridlines + 1);
     var magnitude = Math.log(interval) / Math.log(10);
 
-    interval = Math.pow(10, Math.floor(magnitude));
+    interval = 10 ** Math.floor(magnitude);
 
     var intervals = [
       interval,
@@ -165,6 +126,9 @@ export class NumericAxisElement extends AxisElement {
 
     this.gridMin = Math.floor(minValue / bestInterval) * bestInterval;
     this.gridMax = Math.ceil(maxValue / bestInterval) * bestInterval;
+    console.log(intervals);
+    console.log(minValue, maxValue, this.targetGridlines);
+    console.log(this.gridMin, this.gridMax, bestInterval);
 
     this.gridlines = [];
     for (var line = this.gridMin + bestInterval; line < this.gridMax; line += bestInterval)
@@ -191,9 +155,11 @@ export class YNumericAxisElement extends NumericAxisElement {
   render() {
     return svg`
       <g class="cons-y-axis cons-y-axis--numeric">
+          <text x="0" y=${this.tr(this.gridMax)} dominant-baseline="middle" text-anchor="end">${this.getLabel(this.gridMax)}</text>
         ${this.gridlines.map(gl => svg`
           <text x="0" y=${this.tr(gl)} dominant-baseline="middle" text-anchor="end">${this.getLabel(gl)}</text>
         `)}
+          <text x="0" y=${this.tr(this.gridMin)} dominant-baseline="middle" text-anchor="end">${this.getLabel(this.gridMin)}</text>
       </g>
     `;
   }

@@ -66,9 +66,8 @@ export class DatasetElement extends DhtmlElement {
 
   getSeries(seriesName) {
     return this.cache(seriesName, () => this.#data
-      .slice(this.#firstIndex, this.#firstIndex + this.#length)
       .map(row => (seriesName in row) ? row[seriesName] : null)
-    );
+    ).slice(this.#firstIndex, this.#firstIndex + this.#length);
   }
   getMappedSeries(seriesName, key, mapper) {
     return this.cache(seriesName + '~' + key, () => this.getSeries(seriesName).map(mapper));
