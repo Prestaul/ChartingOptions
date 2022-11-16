@@ -1,0 +1,16 @@
+<script type="module">
+  import { randomDataset } from './random-series.js';
+
+  function test(...args) {
+    const el = document.createElement('pre');
+    el.innerText = JSON.stringify(randomDataset(...args));
+    document.body.append(el);
+  }
+
+  test({
+    a: null,
+    b: null,
+    c: null,
+    d: { max: 1000 },
+  });
+</script>
