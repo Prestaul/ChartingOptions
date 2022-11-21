@@ -90,7 +90,7 @@ export function NumericAxisMixin(proto) {
       // 	maxValue = 10;
       // }
   
-      if (!(maxValue - minValue)) { // jshint ignore:line
+      if (!(maxValue - minValue)) { 
         const adjust = Math.abs((maxValue && maxValue / 10) || 0.1);
         maxValue += adjust;
         minValue -= adjust;

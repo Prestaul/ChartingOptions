@@ -1,27 +1,40 @@
-import { html, svg } from 'https://unpkg.com/uhtml?module';
-import { AxisElement } from './axis.js';
-import { nullableNumber, isNumber } from './utils.js';
+import { Axis } from './axis.js';
+import { isNumber, nullableNumber } from '../utils.js';
 
-export class NumericAxisElement extends AxisElement {
+export class NumericAxis extends Axis {
   artificialMin = null;
   artificialMax = null;
   keepZeroVisible = false;
 
-  targetGridlines = 5;
   minGridlines = 2;
 
   autoCalcGridlines = true;
   gridMin = 0;
   gridMax = 1;
+  padStart = 0;
+  padEnd = 0;
 
   gridlines = [];
 
-  init() {
-    super.init();
+  constructor(dataset, {
+    autoCalcGridlines,
+    artificialMin,
+    artificialMax,
+    minGridlines,
+    padStart,
+    padEnd,
+    ...options
+  } = {}) {
+    super(dataset, options);
 
-    this.artificialMin = nullableNumber(this.getAttribute('artificialMin')) ?? this.artificialMin;
-    this.artificialMax = nullableNumber(this.getAttribute('artificialMax')) ?? this.artificialMax;
-    this.minGridlines = nullableNumber(this.getAttribute('minGridlines')) ?? this.minGridlines;
+    this.autoCalcGridlines = autoCalcGridlines !== false;
+    this.artificialMin = nullableNumber(artificialMin);
+    this.artificialMax = nullableNumber(artificialMax);
+    if (isNumber(minGridlines)) this.minGridlines = minGridlines;
+    if (isNumber(padStart)) this.padStart = padStart;
+    if (isNumber(padEnd)) this.padEnd = padEnd;
+
+    this.reset();
   }
 
   setKeepZeroVisible(keepZeroVisible) {
@@ -49,10 +62,10 @@ export class NumericAxisElement extends AxisElement {
   tvr(index, seriesName) { return Math.round(this.transformValue(index, seriesName)); }
 
   calculateMinValue() {
-    return Math.min.apply(Math, this.plots.map(seriesName => this.ds.getMin(seriesName)));
+    return Math.min(...this.plot.map(seriesName => this.dataset.getMin(seriesName)));
   }
   calculateMaxValue() {
-    return Math.max.apply(Math, this.plots.map(seriesName => this.ds.getMax(seriesName)));
+    return Math.max(...this.plot.map(seriesName => this.dataset.getMax(seriesName)));
   }
 
   reset() {
@@ -84,6 +97,12 @@ export class NumericAxisElement extends AxisElement {
   resetGridlines() {
     let minValue = this.minValue;
     let maxValue = this.maxValue;
+
+    if (this.padStart || this.padEnd) {
+      const s = (maxValue - minValue) / this.range.size;
+      minValue -= (this.invert ? this.padEnd : this.padStart) * s;
+      maxValue += (this.invert ? this.padStart : this.padEnd) * s;
+    }
 
     // if(maxValue == minValue) {
     // 	//Fudge it a little bit
@@ -126,42 +145,12 @@ export class NumericAxisElement extends AxisElement {
 
     this.gridMin = Math.floor(minValue / bestInterval) * bestInterval;
     this.gridMax = Math.ceil(maxValue / bestInterval) * bestInterval;
-    console.log(intervals);
-    console.log(minValue, maxValue, this.targetGridlines);
-    console.log(this.gridMin, this.gridMax, bestInterval);
+    // console.log('intervals', intervals);
+    // console.log({ minValue, maxValue, targetGridlines: this.targetGridlines });
+    // console.log(this.gridMin, this.gridMax, bestInterval);
 
     this.gridlines = [];
     for (var line = this.gridMin + bestInterval; line < this.gridMax; line += bestInterval)
       this.gridlines.push(line);
   }
 }
-
-export class XNumericAxisElement extends NumericAxisElement {
-  render() {
-    return svg`
-      <g class="cons-x-axis cons-x-axis--numeric">
-        <line x1=${this.tr(this.minValue)} y1="0" x2=${this.tr(this.maxValue)} y2="0" />
-        ${this.gridlines.map(gl => svg`
-          <line x1=${this.tr(gl)} y1="0" x2=${this.tr(gl)} y2="6" />
-          <text x=${this.tr(gl)} y="100%" dominant-baseline="hanging" text-anchor="middle">${this.getLabel(gl)}</text>
-        `)}
-      </g>
-    `;
-  }
-}
-customElements.define('cons-x-numeric-axis', XNumericAxisElement);
-
-export class YNumericAxisElement extends NumericAxisElement {
-  render() {
-    return svg`
-      <g class="cons-y-axis cons-y-axis--numeric">
-          <text x="0" y=${this.tr(this.gridMax)} dominant-baseline="middle" text-anchor="end">${this.getLabel(this.gridMax)}</text>
-        ${this.gridlines.map(gl => svg`
-          <text x="0" y=${this.tr(gl)} dominant-baseline="middle" text-anchor="end">${this.getLabel(gl)}</text>
-        `)}
-          <text x="0" y=${this.tr(this.gridMin)} dominant-baseline="middle" text-anchor="end">${this.getLabel(this.gridMin)}</text>
-      </g>
-    `;
-  }
-}
-customElements.define('cons-y-numeric-axis', YNumericAxisElement);
